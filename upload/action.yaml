@@ -1,0 +1,120 @@
+name: S3 upload
+description: Upload a set of artifacts to S3
+inputs:
+  # Path(s) to the artifacts to upload
+  path:
+    required: true
+    description: Path(s) to the artifacts to upload
+  # S3 url for bucket and path prefix of the artifact
+  s3uri:
+    required: true
+    description: S3 url for bucket and path prefix of the artifact
+  # Artifact key name (a unique hash or timestamp or other identifier)
+  key:
+    required: false
+    description: Artifact key name (a unique hash or timestamp or other identifier)
+    default: ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+  aws-access-key-id:
+    required: false
+    description: AWS access key ID of the S3 location
+  aws-secret-access-key:
+    required: false
+    description: AWS secret access key ID of the S3 location
+  aws-region:
+    required: false
+    description: AWS region of the S3 location
+    default: us-east-1
+
+outputs:
+  s3uri:
+    description: S3 URL for uploaded artifact
+    value: ${{ steps.s3.outputs.s3uri }}
+
+runs:
+  using: composite
+  steps:
+    - name: Collect artifacts into temporary path
+      id: collect
+      shell: bash
+      run: |
+        # Create our temporary directory parent for our artifacts
+        mkdir -p "$RUNNER_TEMP/actions-s3-artifact"
+
+        # Create a unique directory for this particular action run
+        TMPDIR="$(mktemp -d -p "$RUNNER_TEMP" "actions-s3-artifact/upload.XXXXXXXX")"
+        echo "::set-output name=tmpdir::$TMPDIR"
+        echo "::debug::Created temporary directory $TMPDIR"
+
+        # Assign the tarball file name for future use
+        TMPTAR="$TMPDIR/artifacts.tar.gz"
+
+        # Create a path within our temporary directory to collect all the artifacts
+        TMPARTIFACT="$TMPDIR/artifacts"
+        mkdir -p "$TMPARTIFACT"
+
+        # Read the path string into a bash array for easy looping
+        readarray -t ARTIFACT_PATHS <<< "${{ inputs.path }}"
+
+        # Iterate through each artifact path and copy it to the temporary path
+        for name in ${ARTIFACT_PATHS[@]}; do
+          if [[ -z "$name" ]]; then
+            echo "::debug::Skipping empty"
+            continue
+          fi
+          echo "Adding '$name'"
+          mkdir -p "$TMPARTIFACT/$(dirname "$name")"
+          cp -r "$name" "$TMPARTIFACT/$(dirname "$name")"
+        done
+
+        # List out everything in the temporary path
+        if [[ -n "$RUNNER_DEBUG" ]]; then
+          echo "::debug::Contents of our temporary artifact build"
+          echo "$(tree -a "$TMPDIR" 2>&1)"
+        fi
+
+        # Tarball the temporary path into a single object
+        echo "Creating artifact tarball"
+        tar -czvf "$TMPTAR" -C "$TMPARTIFACT" --transform='s/^\.\///' \
+          --show-transformed .
+
+        # List the actual contents of the archive
+        if [[ -n "$RUNNER_DEBUG" ]]; then
+          echo "::debug::Artifact contents"
+          echo "$(tar -ztvf "$TMPTAR" 2>&1)"
+        fi
+
+        # Output the keyname for use in subsequent steps
+        echo "::set-output name=tarball::$TMPTAR"
+    - name: Configure AWS credentials
+      if: inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+    - name: Upload artifact to S3
+      id: s3
+      shell: bash
+      run: |
+        AWSCMD=${AWSCMD:-aws}
+        S3URI="${{ inputs.s3uri }}"
+        if [[ "$S3URI" != s3://* ]]; then
+          echo "::warning::'s3uri' should start with s3://"
+          S3URI="s3://$S3URI"
+        fi
+
+        S3URI="${S3URI%/}/${{ inputs.key }}"
+        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz ]]; then
+          echo "::debug::s3uri has tarball extension already, skipping"
+        else
+          S3URI="$S3URI.tgz"
+        fi
+
+        echo "::debug::Using AWS CLI: $AWSCMD"
+        echo "Uploading '${{ steps.collect.outputs.tarball }}' to S3 '$S3URI'"
+
+        # Upload the artifact to S3 based on keyname from previous step
+        $AWSCMD s3 cp "${{ steps.collect.outputs.tarball }}" "$S3URI"
+
+        # Output the S3 URL for use in subsequent steps
+        echo "::set-output name=s3uri::$S3URI"

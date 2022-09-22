@@ -16,7 +16,313 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    needs: [test-upload, test-download]
     steps:
+      # This test is for node-based actions, we want to test our actions
       - uses: open-turo/actions-gha/test@v1
         with:
+          checkout-repo: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  test-upload:
+    name: Test / Upload
+    runs-on: ubuntu-latest
+    env:
+      AWSCMD: awslocal
+      S3_BUCKET: actions-s3-artifact-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Create python requirements, for caching
+        run: |
+          cat > requirements.txt <<-EOF
+          awscli
+          awscli-local[ver1]
+          boto3>=1.20
+          botocore<1.28.0,>=1.27.80
+          localstack
+          pyopenssl
+          EOF
+      - name: Setup Python dependency cache
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: .python-version
+          cache: "pip"
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+      # TODO: Replace this for faster localstack startup, particularly docker
+      # image caching or using a leaner image
+      - name: Setup LocalStack
+        uses: HarshCasper/setup-localstack@v0.1.1
+        # env:
+        #   LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+      - name: Create S3 bucket in localstack
+        run: awslocal s3 mb "s3://${S3_BUCKET}"
+      - name: Upload individual files
+        id: individual
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload
+          path: |
+            upload/action.yaml
+            download/action.yaml
+      - name: Upload directory contents with glob
+        id: glob
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload-glob
+          path: .github/*
+      - name: Upload with specified key
+        id: key
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload-key
+          key: ${{ hashFiles('upload/action.yaml') }}
+          path: upload/*
+      - name: Check if uploads were successful
+        run: |
+          echo "Check upload.individual: ${{ steps.individual.outputs.s3uri }}"
+          output=$(awslocal s3 ls "${{ steps.individual.outputs.s3uri }}")
+          echo "Found: $output"
+          if [[ "$output" == "None" ]]; then
+            echo "::error::Failed to find uploaded artifact"
+            exit 1
+          fi
+
+          echo "Check upload.glob: ${{ steps.glob.outputs.s3uri }}"
+          output=$(awslocal s3 ls "${{ steps.glob.outputs.s3uri }}")
+          echo "Found: $output"
+          if [[ "$output" == "None" ]]; then
+            echo "::error::Failed to find uploaded artifact"
+            exit 1
+          fi
+
+          echo "Check upload.key: ${{ steps.key.outputs.s3uri }}"
+          output=$(awslocal s3 ls "${{ steps.key.outputs.s3uri }}")
+          echo "Found: $output"
+          if [[ "$output" == "None" ]]; then
+            echo "::error::Failed to find uploaded artifact"
+            exit 1
+          fi
+
+  test-download:
+    name: Test / Download
+    runs-on: ubuntu-latest
+    env:
+      AWSCMD: awslocal
+      S3_BUCKET: actions-s3-artifact-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Create python requirements, for caching
+        run: |
+          cat > requirements.txt <<-EOF
+          awscli
+          awscli-local[ver1]
+          boto3>=1.20
+          botocore<1.28.0,>=1.27.80
+          localstack
+          pyopenssl
+          EOF
+      - name: Setup Python dependency cache
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: .python-version
+          cache: "pip"
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+      # TODO: Replace this for faster localstack startup, particularly docker
+      # image caching or using a leaner image
+      - name: Setup LocalStack
+        uses: HarshCasper/setup-localstack@v0.1.1
+      - name: Create S3 bucket in localstack
+        run: awslocal s3 mb "s3://${S3_BUCKET}"
+      - name: Upload a file
+        id: upload-individual
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-download
+          path: upload/action.yaml
+      - name: Upload a tree
+        id: upload-tree
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-download-tree
+          path: .github/*
+      - name: Download tar
+        id: tar
+        uses: ./download
+        with:
+          s3uri: ${{ steps.upload-individual.outputs.s3uri }}
+          path: artifact
+      - name: Download file to default path
+        id: file-default-path
+        uses: ./download
+        env:
+          AWSCMD: aws
+        with:
+          s3uri: s3://turo-github-runners/public/lambdas/v1.8.1/webhook.zip
+      - name: Download file to specified path
+        id: file-specified-path
+        uses: ./download
+        env:
+          AWSCMD: aws
+        with:
+          s3uri: s3://turo-github-runners/public/lambdas/v1.8.1/webhook.zip
+          path: artifact/webhook
+      - name: Download tree
+        id: download-tree
+        uses: ./download
+        with:
+          s3uri: ${{ steps.upload-tree.outputs.s3uri }}
+          path: artifact-tree
+      - name: Download tree and strip paths
+        id: download-tree-strip
+        uses: ./download
+        with:
+          s3uri: ${{ steps.upload-tree.outputs.s3uri }}
+          path: artifact-tree-strip
+          strip: 1
+      - name: Check if downloads were successful
+        run: |
+          tree -a -I ".git" .
+
+          echo "Check download.upload-individual: ${{ steps.upload-individual.outputs.s3uri }}"
+          if [[ ! -f artifact/upload/action.yaml ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+          echo "Check download.file-default-path: ${{ steps.file-default-path.outputs.s3uri }}"
+          if [[ ! -f webhook.zip ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+          echo "Check download.file-specified-path: ${{ steps.file-specified-path.outputs.s3uri }}"
+          if [[ ! -f artifact/webhook/webhook.zip ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+          echo "Check download.download-tree: ${{ steps.download-tree.outputs.s3uri }}"
+          if [[ ! -f artifact-tree/.github/workflows/ci.yaml ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+          echo "Check download.download-tree-strip: ${{ steps.download-tree-strip.outputs.s3uri }}"
+          if [[ ! -f artifact-tree-strip/workflows/ci.yaml ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+  test-cache:
+    name: Test / Cache
+    runs-on: ubuntu-latest
+    env:
+      AWSCMD: awslocal
+      S3_BUCKET: actions-s3-artifact-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Create python requirements, for caching
+        run: |
+          cat > requirements.txt <<-EOF
+          awscli
+          awscli-local[ver1]
+          boto3>=1.20
+          botocore<1.28.0,>=1.27.80
+          localstack
+          pyopenssl
+          EOF
+      - name: Setup Python dependency cache
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: .python-version
+          cache: "pip"
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+      # TODO: Replace this for faster localstack startup, particularly docker
+      # image caching or using a leaner image
+      - name: Setup LocalStack
+        uses: HarshCasper/setup-localstack@v0.1.1
+      - name: Create S3 bucket in localstack
+        run: awslocal s3 mb "s3://${S3_BUCKET}"
+      - name: Download cache (doesn't exist)
+        id: cache
+        uses: ./download
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-cache/cached.tgz
+          path: cache
+          not-found: ignore
+      - name: Create cache item
+        id: create-cache
+        if: steps.cache.outputs.success != 'true'
+        run: |
+          mkdir -p cache
+          echo "Hello World" > cache/hello.txt
+          echo "::set-output name=success::true"
+      - name: Upload cache
+        id: upload-cache
+        if: steps.cache.outputs.success != 'true'
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-cache/
+          key: cached.tgz
+          path: cache
+      - name: Download cache (does exist)
+        id: cache-exists
+        uses: ./download
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-cache/cached.tgz
+          path: cache
+          not-found: ignore
+      - name: Create cache item
+        id: create-cache-exists
+        if: steps.cache-exists.outputs.success != 'true'
+        run: |
+          mkdir -p cache
+          echo "Hello World" > cache/hello.txt
+          echo "::set-output name=success::true"
+      - name: Upload cache
+        id: upload-cache-exists
+        if: steps.cache-exists.outputs.success != 'true'
+        uses: ./upload
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-cache
+          key: cached.tgz
+          path: cache
+      - name: Check step output
+        if: success() || failure()
+        run: |
+          echo "cache: ${{ steps.cache.outputs.success }}"
+          if [[ "${{ steps.cache.outputs.success }}" != "false" ]]; then
+            echo "::error::Cache already existed?"
+            exit 1
+          fi
+          echo "create-cache: ${{ steps.create-cache.outputs.success }}"
+          if [[ "${{ steps.create-cache.outputs.success }}" != "true" ]]; then
+            echo "::error::Failed to create cache"
+            exit 1
+          fi
+          echo "upload-cache: ${{ steps.upload-cache.outputs.s3uri }}"
+          if [[ "${{ steps.upload-cache.outputs.s3uri }}" == "" ]]; then
+            echo "::error::Failed to upload cache"
+            exit 1
+          fi
+          echo "cache-exists: ${{ steps.cache-exists.outputs.success }}"
+          if [[ "${{ steps.cache-exists.outputs.success }}" != "true" ]]; then
+            echo "::error::Cache didn't exist?"
+            exit 1
+          fi
+          echo "create-cache-exists: ${{ steps.create-cache-exists.outputs.success }}"
+          if [[ "${{ steps.create-cache-exists.outputs.success }}" == "true" ]]; then
+            echo "::error::Created cache when it already existed?"
+            exit 1
+          fi
+          echo "upload-cache-exists: ${{ steps.upload-cache-exists.outputs.s3uri }}"
+          if [[ "${{ steps.upload-cache-exists.outputs.s3uri }}" != "" ]]; then
+            echo "::error::Uploaded cache again?"
+            exit 1
+          fi

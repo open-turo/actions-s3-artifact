@@ -1,0 +1,103 @@
+name: S3 download
+description: Download a set of artifacts from S3
+inputs:
+  path:
+    required: false
+    description: Path to download artifacts to
+    default: .
+  strip:
+    required: false
+    description: Strip leading path components from downloaded artifacts
+  s3uri:
+    required: true
+    description: S3 uri to artifact to download
+  not-found:
+    required: false
+    description: What to do if the artifact is not found (error, warn, ignore)
+    default: error
+  aws-access-key-id:
+    required: false
+    description: AWS access key ID of the S3 location
+  aws-secret-access-key:
+    required: false
+    description: AWS secret access key ID of the S3 location
+  aws-region:
+    required: false
+    description: AWS region of the S3 location
+    default: us-east-1
+
+outputs:
+  s3uri:
+    description: S3 URL for uploaded artifact
+    value: ${{ steps.s3.outputs.s3uri }}
+  success:
+    description: Whether the artifact download was successful
+    value: ${{ steps.s3.outputs.success }}
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS credentials
+      if: inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+    - name: Configure public downloads
+      if: inputs.aws-access-key-id == '' || inputs.aws-secret-access-key == ''
+      shell: bash
+      run: |
+        # Configure public downloads
+        echo "AWS_CLI_ARGS=--no-sign-request" >> $GITHUB_ENV
+    - name: Download artifacts from s3 (old)
+      id: s3
+      shell: bash
+      run: |
+        # Make sure that the path directory exists
+        mkdir -p "${{ inputs.path }}"
+
+        # Ensure we have a unique temporary directory to download to
+        mkdir -p "$RUNNER_TEMP/actions-s3-artifact"
+
+        # Create a unique directory for this particular action run
+        TMPDIR="$(mktemp -d -p "$RUNNER_TEMP" "actions-s3-artifact/download.XXXXXXXX")"
+        echo "::debug::Created temporary directory $TMPDIR"
+
+        # Target for download, this can be a single file or a tarball
+        TMPFILE="$TMPDIR/artifacts"
+
+        # S3 URI to download
+        S3URI="${{ inputs.s3uri }}"
+        ARTIFACT_NAME="$(basename $S3URI)"
+
+        # Try to download and handle failure
+        AWSCMD=${AWSCMD:-aws}
+        $AWSCMD s3 cp $AWS_CLI_ARGS "$S3URI" "$TMPFILE" || {
+          echo "::set-output name=success::false"
+          if [[ "${{ inputs.not-found }}" == "ignore" ]]; then
+            echo "::debug::Artifact not found at $S3URI"
+          elif [[ "${{ inputs.not-found }}" == "warn" ]]; then
+            echo "::warning::Artifact not found at $S3URI"
+          else
+            echo "::error::Artifact not found at $S3URI"
+            exit 1
+          fi
+          exit 0
+        }
+
+        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz ]]; then
+          if [[ -n "${{ inputs.strip }}" ]]; then
+            TAR_CLI_ARGS="--strip-components=${{ inputs.strip }}"
+          fi
+          # Downloaded a tarball, extract it
+          tar -xzvf "$TMPFILE" -C "${{ inputs.path }}" $TAR_CLI_ARGS
+        else
+          # Downloaded a single file, move it to the target path
+          echo "Copying file $TMPFILE to directory ${{ inputs.path }}"
+          mv "$TMPFILE" "${{ inputs.path }}/$ARTIFACT_NAME"
+        fi
+        echo "::debug::Contents of artifact path"
+        echo "$(tree -a "${{ inputs.path }}" 2>&1)"
+        echo "::set-output name=success::true"
+        echo "::set-output name=s3uri::$S3URI"
