@@ -40,6 +40,8 @@ when they are used singularly. The inputs available are:
 Both `aws-access-key-id` and `aws-secret-access-key` are required to trigger the
 authorization process.
 
+### Download
+
 #### Minimal download
 
 Minimally configured action if already authorized S3/AWS credentials. This
@@ -91,8 +93,8 @@ created within the current working directory.
 ```yaml
 - uses: open-turo/actions-s3-artifact/download@v1
   with:
-    s3uri: s3://bucket-name/path/to/archive.tgz
     path: artifacts
+    s3uri: s3://bucket-name/path/to/archive.tgz
 ```
 
 #### Download tarball and strip loading paths
@@ -107,7 +109,7 @@ created within the current working directory. This is identical to the
 
 ```yaml
 - uses: open-turo/actions-s3-artifact/download@v1
-  with:
+  with:`
     s3uri: s3://bucket-name/path/to/archive.tgz
     path: artifacts
     strip: 1
@@ -121,6 +123,7 @@ This example shows how to make a passthrough failure download attempt.
 - uses: open-turo/actions-s3-artifact/download@v1
   with:
     s3uri: s3://bucket-name/path/to/does-not-exist
+    path: artifacts
     not-found: ignore
 ```
 
