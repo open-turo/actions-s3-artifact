@@ -1,5 +1,3 @@
-## Description
-
 # Github Action S3 Artifact upload
 
 This action uploads one or multiple files to an s3 uri location.
