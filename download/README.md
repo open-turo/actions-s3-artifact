@@ -115,7 +115,7 @@ created within the current working directory. This is identical to the
     strip: 1
 ```
 
-#### Attempt to dwonload but ignore failure
+#### Attempt to download but ignore failure
 
 This example shows how to make a passthrough failure download attempt.
 
