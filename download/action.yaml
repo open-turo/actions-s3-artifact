@@ -74,7 +74,7 @@ runs:
         # Try to download and handle failure
         AWSCMD=${AWSCMD:-aws}
         $AWSCMD s3 cp $AWS_CLI_ARGS "$S3URI" "$TMPFILE" || {
-          echo "::set-output name=success::false"
+          echo "success=false" >> $GITHUB_OUTPUT
           if [[ "${{ inputs.not-found }}" == "ignore" ]]; then
             echo "::debug::Artifact not found at $S3URI"
           elif [[ "${{ inputs.not-found }}" == "warn" ]]; then
@@ -99,5 +99,5 @@ runs:
         fi
         echo "::debug::Contents of artifact path"
         echo "$(tree -a "${{ inputs.path }}" 2>&1)"
-        echo "::set-output name=success::true"
-        echo "::set-output name=s3uri::$S3URI"
+        echo "success=true" >> $GITHUB_OUTPUT
+        echo "s3uri=$S3URI" >> $GITHUB_OUTPUT

@@ -42,7 +42,7 @@ runs:
 
         # Create a unique directory for this particular action run
         TMPDIR="$(mktemp -d -p "$RUNNER_TEMP" "actions-s3-artifact/upload.XXXXXXXX")"
-        echo "::set-output name=tmpdir::$TMPDIR"
+        echo "tmpdir=$TMPDIR" >> $GITHUB_OUTPUT
         echo "::debug::Created temporary directory $TMPDIR"
 
         # Assign the tarball file name for future use
@@ -84,7 +84,7 @@ runs:
         fi
 
         # Output the keyname for use in subsequent steps
-        echo "::set-output name=tarball::$TMPTAR"
+        echo "tarball=$TMPTAR" >> $GITHUB_OUTPUT
     - name: Configure AWS credentials
       if: inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
       uses: aws-actions/configure-aws-credentials@v1
@@ -117,4 +117,4 @@ runs:
         $AWSCMD s3 cp "${{ steps.collect.outputs.tarball }}" "$S3URI"
 
         # Output the S3 URL for use in subsequent steps
-        echo "::set-output name=s3uri::$S3URI"
+        echo "s3uri=$S3URI" >> $GITHUB_OUTPUT
