@@ -104,6 +104,8 @@ jobs:
             echo "::error::Failed to find uploaded artifact"
             exit 1
           fi
+      - name: Announce job is finished
+        run: echo 'Upload test finished'
 
   test-download:
     name: Test / Download
