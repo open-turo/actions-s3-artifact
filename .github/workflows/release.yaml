@@ -27,8 +27,6 @@ jobs:
       - test
     name: Release
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: open-turo/actions-gha/release@v1
         env:
