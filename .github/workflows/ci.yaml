@@ -155,6 +155,15 @@ jobs:
         with:
           s3uri: ${{ steps.upload-individual.outputs.s3uri }}
           path: artifact
+      - name: Download recursively
+        id: recursive-download
+        uses: ./download
+        env:
+          AWSCMD: aws
+        with:
+          s3uri: s3://turo-github-runners/public/lambdas/v1.8.1/
+          path: artifact-recursive
+          recursive: "true"
       - name: Download file to default path
         id: file-default-path
         uses: ./download
@@ -213,6 +222,12 @@ jobs:
 
           echo "Check download.download-tree-strip: ${{ steps.download-tree-strip.outputs.s3uri }}"
           if [[ ! -f artifact-tree-strip/workflows/ci.yaml ]]; then
+            echo "::error::Failed to find downloaded artifact"
+            exit 1
+          fi
+
+          echo "Check download.recursive-default-path: ${{ steps.recursive-download.outputs.s3uri }}"
+          if [[ ! -f artifact-recursive/webhook.zip ]]; then
             echo "::error::Failed to find downloaded artifact"
             exit 1
           fi
