@@ -54,6 +54,19 @@ will download "file" into the current working directory, preserving the name
     s3uri: s3://bucket-name/path/to/file
 ```
 
+#### Recursive download
+
+If recursive input is provided and set to "true", this
+will download all files or objects for the given s3Uri into the current working directory.
+By default, download is not performed recursively
+
+```yaml
+- uses: open-turo/actions-s3-artifact/download@v1
+  with:
+    s3uri: s3://bucket-name/path/to/file
+    recursive: "true"
+```
+
 #### Download with authorization
 
 The following example shows how to download a file with authorization. This will

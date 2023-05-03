@@ -25,6 +25,10 @@ inputs:
     required: false
     description: AWS region of the S3 location
     default: us-east-1
+  recursive:
+    required: false
+    description: Download all files or objects under the specified s3uri
+    default: "false"
 
 outputs:
   s3uri:
@@ -70,6 +74,11 @@ runs:
         # S3 URI to download
         S3URI="${{ inputs.s3uri }}"
         ARTIFACT_NAME="$(basename $S3URI)"
+
+        # Download recusrively
+        if [ "${{ inputs.recursive }}" = true ]; then
+            AWS_CLI_ARGS+=" --recursive"
+        fi
 
         # Try to download and handle failure
         AWSCMD=${AWSCMD:-aws}
