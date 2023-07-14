@@ -24,6 +24,10 @@ inputs:
     required: false
     description: AWS region of the S3 location
     default: us-east-1
+  compress:
+    required: false
+    description: Whether to build a tarball of the artifacts before uploading
+    default: "true"
 
 outputs:
   s3uri:
@@ -72,19 +76,25 @@ runs:
           echo "$(tree -a "$TMPDIR" 2>&1)"
         fi
 
-        # Tarball the temporary path into a single object
-        echo "Creating artifact tarball"
-        tar -czvf "$TMPTAR" -C "$TMPARTIFACT" --transform='s/^\.\///' \
-          --show-transformed .
+        # Tarball the temporary path into a single object if "compress" is true, return the folder path otherwise
+        if [[ "${{ inputs.compress }}" == "true" ]]; then
+          echo "Creating artifact tarball"
+          tar -czvf "$TMPTAR" -C "$TMPARTIFACT" --transform='s/^\.\///' \
+            --show-transformed .
 
-        # List the actual contents of the archive
-        if [[ -n "$RUNNER_DEBUG" ]]; then
-          echo "::debug::Artifact contents"
-          echo "$(tar -ztvf "$TMPTAR" 2>&1)"
+          # List the actual contents of the archive
+          if [[ -n "$RUNNER_DEBUG" ]]; then
+            echo "::debug::Artifact contents"
+            echo "$(tar -ztvf "$TMPTAR" 2>&1)"
+          fi
+
+          # Output the compressed file keyname for use in subsequent steps
+          echo "tarball=$TMPTAR" >> $GITHUB_OUTPUT
+        else
+          # Output the folder keyname for use in subsequent steps
+          echo "folder=$TMPARTIFACT" >> $GITHUB_OUTPUT
         fi
 
-        # Output the keyname for use in subsequent steps
-        echo "tarball=$TMPTAR" >> $GITHUB_OUTPUT
     - name: Configure AWS credentials
       if: inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
       uses: aws-actions/configure-aws-credentials@v1
@@ -104,17 +114,21 @@ runs:
         fi
 
         S3URI="${S3URI%/}/${{ inputs.key }}"
-        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz ]]; then
-          echo "::debug::s3uri has tarball extension already, skipping"
+        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz || "${{ inputs.compress }}" != "true" ]]; then
+          echo "::debug::s3uri does not need .tgz extension, skipping"
         else
           S3URI="$S3URI.tgz"
         fi
 
         echo "::debug::Using AWS CLI: $AWSCMD"
-        echo "Uploading '${{ steps.collect.outputs.tarball }}' to S3 '$S3URI'"
 
         # Upload the artifact to S3 based on keyname from previous step
-        $AWSCMD s3 cp "${{ steps.collect.outputs.tarball }}" "$S3URI"
-
+        if [[ "${{ inputs.compress }}" == "true" ]]; then
+          echo "Uploading '${{ steps.collect.outputs.tarball }}' to S3 '$S3URI'"
+          $AWSCMD s3 cp "${{ steps.collect.outputs.tarball }}" "$S3URI"
+        else
+          echo "Uploading '${{ steps.collect.outputs.folder }}' to S3 '$S3URI'"
+          $AWSCMD s3 cp --recursive "${{ steps.collect.outputs.folder }}" "$S3URI"
+        fi
         # Output the S3 URL for use in subsequent steps
         echo "s3uri=$S3URI" >> $GITHUB_OUTPUT
