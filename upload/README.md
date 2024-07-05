@@ -1,6 +1,13 @@
 # Github Action S3 Artifact upload
 
-This action uploads one or multiple files to an s3 uri location.
+<!-- prettier-ignore-start   -->
+<!-- action-docs-description -->
+
+## Description
+
+GitHub Action that builds Node based repository
+
+<!-- prettier-ignore-end -->
 
 ## Usage
 
@@ -91,23 +98,69 @@ key `YYYY-MM-DD` as name.
     aws-region: ${{ secrets.AWS_REGION }}
 ```
 
+<!-- prettier-ignore-start -->
+<!-- action-docs-inputs source="action.yaml"  -->
 ## Inputs
 
-| parameter             | description                                                        | required | default                                                              |
-| --------------------- | ------------------------------------------------------------------ | -------- | -------------------------------------------------------------------- |
-| path                  | Path(s) to the artifacts to upload                                 | `true`   |                                                                      |
-| s3uri                 | S3 url for bucket and path prefix of the artifact                  | `true`   |                                                                      |
-| key                   | Artifact key name (a unique hash or timestamp or other identifier) | `false`  | ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }} |
-| aws-access-key-id     | AWS access key ID of the S3 location                               | `false`  |                                                                      |
-| aws-secret-access-key | AWS secret access key ID of the S3 location                        | `false`  |                                                                      |
-| aws-region            | AWS region of the S3 location                                      | `false`  | us-east-1                                                            |
-
-## Outputs
-
-| parameter | description                  |
-| --------- | ---------------------------- |
-| s3uri     | S3 URL for uploaded artifact |
-
+| parameter | description | required | default |
+| --- | --- | --- | --- |
+| checkout-repo | Perform checkout as first step of action | `false` | true |
+| build-script | Custom script to run, should be defined in package.json. | `false` | build |
+| github-token | GitHub token that can checkout the repository. e.g. 'secrets.GITHUB_TOKEN' | `true` | ${{ github.token }} |
+| npm-auth-token | The Node Package Manager (npm) authentication token. This token is used to authenticate against a private NPM registry configured via a .npmrc file. | `false` |  |
+| npm-token | The Node Package Manager (npm) authentication token. This token is used to authenticate against the NPM registry. | `false` |  |
+<!-- action-docs-outputs source="action.yaml"  -->
+<!-- action-docs-runs source="action.yaml"  -->
 ## Runs
 
 This action is a `composite` action.
+<!-- action-docs-usage source="action.yaml" -->
+## Usage
+
+```yaml
+- uses: @
+  with:
+    path:
+    # Path(s) to the artifacts to upload
+    #
+    # Required: true
+    # Default: ""
+
+    s3uri:
+    # S3 url for bucket and path prefix of the artifact
+    #
+    # Required: true
+    # Default: ""
+
+    key:
+    # Artifact key name (a unique hash or timestamp or other identifier)
+    #
+    # Required: false
+    # Default: ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+
+    aws-access-key-id:
+    # AWS access key ID of the S3 location
+    #
+    # Required: false
+    # Default: ""
+
+    aws-secret-access-key:
+    # AWS secret access key ID of the S3 location
+    #
+    # Required: false
+    # Default: ""
+
+    aws-region:
+    # AWS region of the S3 location
+    #
+    # Required: false
+    # Default: us-east-1
+
+    compress:
+    # Whether to build a tarball of the artifacts before uploading
+    #
+    # Required: false
+    # Default: true
+```
+<!-- action-docs-usage source="action.yaml" -->
+<!-- prettier-ignore-end -->
