@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+
+for i in $*; do
+  # ignore if the file does not end with /action.yaml
+  if [[ "$i" != *"/action.yaml" ]]; then
+    echo "skipping: ${i}"
+    continue
+  fi
+
+  echo "npx action-docs --no-banner -s "${i}""
+  cd $(dirname "$i")
+  npx action-docs@2 --no-banner -s action.yaml -u README.md || echo "action-docs failed for $i"
+  cd -
+done

@@ -1,6 +1,13 @@
 # Github Action S3 Artifact Download
 
-This action downloads a file or directory from an S3 bucket.
+<!-- prettier-ignore-start   -->
+<!-- action-docs-description -->
+
+## Description
+
+GitHub Action that builds Node based repository
+
+<!-- prettier-ignore-end -->
 
 ## Usage
 
@@ -127,25 +134,69 @@ This example shows how to make a passthrough failure download attempt.
     not-found: ignore
 ```
 
+<!-- prettier-ignore-start -->
+<!-- action-docs-inputs source="action.yaml"  -->
 ## Inputs
 
-| parameter             | description                                                   | required | default   |
-| --------------------- | ------------------------------------------------------------- | -------- | --------- |
-| path                  | Path to download artifacts to                                 | `false`  | .         |
-| strip                 | Strip leading path components from downloaded artifacts       | `false`  |           |
-| s3uri                 | S3 uri to artifact to download                                | `true`   |           |
-| not-found             | What to do if the artifact is not found (error, warn, ignore) | `false`  | error     |
-| aws-access-key-id     | AWS access key ID of the S3 location                          | `false`  |           |
-| aws-secret-access-key | AWS secret access key ID of the S3 location                   | `false`  |           |
-| aws-region            | AWS region of the S3 location                                 | `false`  | us-east-1 |
-
-## Outputs
-
-| parameter | description                                  |
-| --------- | -------------------------------------------- |
-| s3uri     | S3 URL for uploaded artifact                 |
-| success   | Whether the artifact download was successful |
-
+| parameter | description | required | default |
+| --- | --- | --- | --- |
+| checkout-repo | Perform checkout as first step of action | `false` | true |
+| build-script | Custom script to run, should be defined in package.json. | `false` | build |
+| github-token | GitHub token that can checkout the repository. e.g. 'secrets.GITHUB_TOKEN' | `true` | ${{ github.token }} |
+| npm-auth-token | The Node Package Manager (npm) authentication token. This token is used to authenticate against a private NPM registry configured via a .npmrc file. | `false` |  |
+| npm-token | The Node Package Manager (npm) authentication token. This token is used to authenticate against the NPM registry. | `false` |  |
+<!-- action-docs-outputs source="action.yaml"  -->
+<!-- action-docs-runs source="action.yaml"  -->
 ## Runs
 
 This action is a `composite` action.
+<!-- action-docs-usage source="action.yaml" -->
+## Usage
+
+```yaml
+- uses: @
+  with:
+    path:
+    # Path to download artifacts to
+    #
+    # Required: false
+    # Default: .
+
+    strip:
+    # Strip leading path components from downloaded artifacts
+    #
+    # Required: false
+    # Default: ""
+
+    s3uri:
+    # S3 uri to artifact to download
+    #
+    # Required: true
+    # Default: ""
+
+    not-found:
+    # What to do if the artifact is not found (error, warn, ignore)
+    #
+    # Required: false
+    # Default: error
+
+    aws-access-key-id:
+    # AWS access key ID of the S3 location
+    #
+    # Required: false
+    # Default: ""
+
+    aws-secret-access-key:
+    # AWS secret access key ID of the S3 location
+    #
+    # Required: false
+    # Default: ""
+
+    aws-region:
+    # AWS region of the S3 location
+    #
+    # Required: false
+    # Default: us-east-1
+```
+<!-- action-docs-usage source="action.yaml" -->
+<!-- prettier-ignore-end -->
