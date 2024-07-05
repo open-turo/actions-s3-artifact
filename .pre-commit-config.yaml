@@ -25,6 +25,10 @@ repos:
     rev: v1.7.1
     hooks:
       - id: actionlint
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
   - repo: local
     hooks:
       - id: update-action-readme
