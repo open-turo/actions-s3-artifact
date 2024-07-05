@@ -9,7 +9,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: open-turo/actions-gha/lint@v1
+      - uses: open-turo/actions-gha/lint@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -17,7 +17,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: open-turo/actions-gha/test@v1
+      - uses: open-turo/actions-gha/test@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -28,6 +28,6 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: open-turo/actions-gha/release@v1
+      - uses: open-turo/actions-gha/release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
