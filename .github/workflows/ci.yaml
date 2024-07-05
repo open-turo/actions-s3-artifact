@@ -44,7 +44,7 @@ jobs:
           pyopenssl
           EOF
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
           cache: "pip"
@@ -125,7 +125,7 @@ jobs:
           pyopenssl
           EOF
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
           cache: "pip"
@@ -237,7 +237,7 @@ jobs:
           pyopenssl
           EOF
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
           cache: "pip"
