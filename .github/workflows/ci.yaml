@@ -53,7 +53,7 @@ jobs:
       # TODO: Replace this for faster localstack startup, particularly docker
       # image caching or using a leaner image
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: HarshCasper/setup-localstack@v0.2.2
         # env:
         #   LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
       - name: Create S3 bucket in localstack
@@ -134,7 +134,7 @@ jobs:
       # TODO: Replace this for faster localstack startup, particularly docker
       # image caching or using a leaner image
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: HarshCasper/setup-localstack@v0.2.2
       - name: Create S3 bucket in localstack
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Upload a file
@@ -246,7 +246,7 @@ jobs:
       # TODO: Replace this for faster localstack startup, particularly docker
       # image caching or using a leaner image
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: HarshCasper/setup-localstack@v0.2.2
       - name: Create S3 bucket in localstack
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Download cache (doesn't exist)
