@@ -138,14 +138,20 @@ This action is a `composite` action.
     # Required: false
     # Default: ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
 
+    role-to-assume:
+    # ARN of the role to assume. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
+    #
+    # Required: false
+    # Default: ""
+
     aws-access-key-id:
-    # AWS access key ID of the S3 location
+    # AWS access key ID of the S3 location. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
     #
     # Required: false
     # Default: ""
 
     aws-secret-access-key:
-    # AWS secret access key ID of the S3 location
+    # AWS secret access key ID of the S3 location. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
     #
     # Required: false
     # Default: ""

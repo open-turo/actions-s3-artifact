@@ -15,12 +15,15 @@ inputs:
     required: false
     description: What to do if the artifact is not found (error, warn, ignore)
     default: error
+  role-to-assume:
+    required: false
+    description: ARN of the role to assume. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
   aws-access-key-id:
     required: false
-    description: AWS access key ID of the S3 location
+    description: AWS access key ID of the S3 location. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
   aws-secret-access-key:
     required: false
-    description: AWS secret access key ID of the S3 location
+    description: AWS secret access key ID of the S3 location. If no credentials are provided, the action will not try to authenticate with AWS and use any existing environment credentials.
   aws-region:
     required: false
     description: AWS region of the S3 location
@@ -37,8 +40,16 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Configure AWS credentials
-      if: inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
+    - name: Configure AWS credentials via OIDC
+      if: inputs.role-to-assume != ''
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-skip-session-tagging: true
+        role-to-assume: ${{ inputs.role-to-assume }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Configure AWS credentials via Access Keys
+      if: inputs.role-to-assume == '' && inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
