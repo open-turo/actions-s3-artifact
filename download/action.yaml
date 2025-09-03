@@ -69,7 +69,7 @@ runs:
 
         # S3 URI to download
         S3URI="${{ inputs.s3uri }}"
-        ARTIFACT_NAME="$(basename $S3URI)"
+        ARTIFACT_NAME="$(basename "$S3URI")"
 
         # Try to download and handle failure
         AWSCMD=${AWSCMD:-aws}
