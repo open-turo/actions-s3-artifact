@@ -32,7 +32,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Python dependency cache
         uses: actions/setup-python@v5
         with:
@@ -99,7 +99,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Python dependency cache
         uses: actions/setup-python@v5
         with:
@@ -199,7 +199,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Python dependency cache
         uses: actions/setup-python@v5
         with:
