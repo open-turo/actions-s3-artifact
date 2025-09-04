@@ -109,7 +109,7 @@ runs:
 
     - name: Configure AWS credentials via Access Keys
       if: inputs.role-to-assume == '' && inputs.aws-access-key-id != '' && inputs.aws-secret-access-key != ''
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
