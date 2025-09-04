@@ -41,7 +41,10 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: "latest"
+          install-awslocal: "true"
       - name: Create S3 bucket in localstack
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Upload individual files
@@ -108,7 +111,10 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: "latest"
+          install-awslocal: "true"
       - name: Create S3 bucket in localstack
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Upload a file
@@ -208,7 +214,11 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: HarshCasper/setup-localstack@v0.1.1
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: "latest"
+          install-awslocal: "true"
+
       - name: Create S3 bucket in localstack
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Download cache (doesn't exist)
