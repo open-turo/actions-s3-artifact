@@ -134,6 +134,83 @@ This example shows how to make a passthrough failure download attempt.
     not-found: ignore
 ```
 
+#### Download artifacts pushed with the upload action
+
+Complete workflow example showing upload and download of artifacts:
+
+```yaml
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      S3_BUCKET: my-artifacts-bucket
+    steps:
+      # Upload individual files
+      - name: Upload individual files
+        id: individual
+        uses: open-turo/actions-s3-artifact/upload@v1
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload
+          path: |
+            upload/action.yaml
+            download/action.yaml
+
+      # Upload directory contents with glob
+      - name: Upload directory contents with glob
+        id: glob
+        uses: open-turo/actions-s3-artifact/upload@v1
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload-glob
+          path: .github/*
+
+      # Upload with specified key
+      - name: Upload with specified key
+        id: key
+        uses: open-turo/actions-s3-artifact/upload@v1
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload-key
+          key: ${{ hashFiles('upload/action.yaml') }}
+          path: upload/*
+
+  download:
+    runs-on: ubuntu-latest
+    needs: upload
+    env:
+      S3_BUCKET: my-artifacts-bucket
+    steps:
+      # Download tar archive
+      - name: Download tar
+        id: tar
+        uses: open-turo/actions-s3-artifact/download@v1
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload/artifact.tgz
+          path: artifact
+
+      # Download file to default path
+      - name: Download file to default path
+        id: file-default-path
+        uses: open-turo/actions-s3-artifact/download@v1
+        with:
+          s3uri: s3://bucket-name/path/to/file.zip
+
+      # Download file to specified path
+      - name: Download file to specified path
+        id: file-specified-path
+        uses: open-turo/actions-s3-artifact/download@v1
+        with:
+          s3uri: s3://bucket-name/path/to/file.zip
+          path: artifact/downloads
+
+      # Download tree and strip paths
+      - name: Download tree and strip paths
+        id: download-tree-strip
+        uses: open-turo/actions-s3-artifact/download@v1
+        with:
+          s3uri: s3://${{ env.S3_BUCKET }}/test-upload-glob/artifact.tgz
+          path: artifact-tree-strip
+          strip: 1
+```
+
 <!-- prettier-ignore-start -->
 <!-- action-docs-inputs source="action.yaml"  -->
 ## Inputs
