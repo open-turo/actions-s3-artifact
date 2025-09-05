@@ -28,6 +28,10 @@ inputs:
     required: false
     description: AWS region of the S3 location
     default: us-east-1
+  public-bucket:
+    required: false
+    description: Enable access to public S3 buckets without authentication (uses --no-sign-request)
+    default: "false"
 
 outputs:
   s3uri:
@@ -55,13 +59,7 @@ runs:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
-    - name: Configure public downloads
-      if: inputs.aws-access-key-id == '' || inputs.aws-secret-access-key == ''
-      shell: bash
-      run: |
-        # Configure public downloads
-        echo "AWS_CLI_ARGS=--no-sign-request" >> $GITHUB_ENV
-    - name: Download artifacts from s3 (old)
+    - name: Download artifacts from s3
       id: s3
       shell: bash
       run: |
@@ -84,6 +82,11 @@ runs:
 
         # Try to download and handle failure
         AWSCMD=${AWSCMD:-aws}
+        if [[ "${{ inputs.public-bucket }}" == "true" ]]; then
+          AWS_CLI_ARGS="--no-sign-request"
+        else
+          AWS_CLI_ARGS=""
+        fi
         $AWSCMD s3 cp $AWS_CLI_ARGS "$S3URI" "$TMPFILE" || {
           echo "success=false" >> $GITHUB_OUTPUT
           if [[ "${{ inputs.not-found }}" == "ignore" ]]; then

@@ -142,6 +142,7 @@ jobs:
           AWSCMD: aws
         with:
           s3uri: s3://turo-github-runners/public/lambdas/v1.8.1/webhook.zip
+          public-bucket: true
       - name: Download file to specified path
         id: file-specified-path
         uses: ./download
@@ -150,6 +151,7 @@ jobs:
         with:
           s3uri: s3://turo-github-runners/public/lambdas/v1.8.1/webhook.zip
           path: artifact/webhook
+          public-bucket: true
       - name: Download tree
         id: download-tree
         uses: ./download

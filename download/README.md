@@ -134,6 +134,17 @@ This example shows how to make a passthrough failure download attempt.
     not-found: ignore
 ```
 
+#### Download from public S3 bucket
+
+The following example shows how to download from a public S3 bucket without authentication:
+
+```yaml
+- uses: open-turo/actions-s3-artifact/download@v1
+  with:
+    s3uri: s3://public-bucket-name/path/to/file
+    public-bucket: true
+```
+
 #### Download artifacts pushed with the upload action
 
 Complete workflow example showing upload and download of artifacts:
@@ -280,6 +291,12 @@ This action is a `composite` action.
     #
     # Required: false
     # Default: us-east-1
+
+    public-bucket:
+    # Enable access to public S3 buckets without authentication (uses --no-sign-request)
+    #
+    # Required: false
+    # Default: false
 ```
 <!-- action-docs-usage source="action.yaml" -->
 <!-- prettier-ignore-end -->
