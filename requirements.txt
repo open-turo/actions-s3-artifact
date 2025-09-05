@@ -1,6 +1,6 @@
-awscli==1.42.23
+awscli==1.42.24
 awscli-local==0.22.2
-boto3==1.40.23
-botocore==1.40.23
+boto3==1.40.24
+botocore==1.40.24
 localstack==4.7.0
 pyOpenSSL==25.1.0
