@@ -118,15 +118,18 @@ runs:
     - name: Upload artifact to S3
       id: s3
       shell: bash
+      env:
+        S3_URI_INPUT: ${{ inputs.s3uri }}
+        S3_KEY: ${{ inputs.key }}
       run: |
         AWSCMD=${AWSCMD:-aws}
-        S3URI="${{ inputs.s3uri }}"
+        S3URI="$S3_URI_INPUT"
         if [[ "$S3URI" != s3://* ]]; then
           echo "::warning::'s3uri' should start with s3://"
           S3URI="s3://$S3URI"
         fi
 
-        S3URI="${S3URI%/}/${{ inputs.key }}"
+        S3URI="${S3URI%/}/$S3_KEY"
         if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz || "${{ inputs.compress }}" != "true" ]]; then
           echo "::debug::s3uri does not need .tgz extension, skipping"
         else
