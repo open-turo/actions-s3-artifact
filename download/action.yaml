@@ -62,9 +62,11 @@ runs:
     - name: Download artifacts from s3
       id: s3
       shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.path }}
       run: |
         # Make sure that the path directory exists
-        mkdir -p "${{ inputs.path }}"
+        mkdir -p "$ARTIFACT_PATH"
 
         # Ensure we have a unique temporary directory to download to
         mkdir -p "$RUNNER_TEMP/actions-s3-artifact"
