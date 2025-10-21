@@ -64,6 +64,10 @@ runs:
       shell: bash
       env:
         ARTIFACT_PATH: ${{ inputs.path }}
+        S3_URI: ${{ inputs.s3uri }}
+        PUBLIC_BUCKET: ${{ inputs.public-bucket }}
+        NOT_FOUND: ${{ inputs.not-found }}
+        STRIP: ${{ inputs.strip }}
       run: |
         # Make sure that the path directory exists
         mkdir -p "$ARTIFACT_PATH"
@@ -79,21 +83,21 @@ runs:
         TMPFILE="$TMPDIR/artifacts"
 
         # S3 URI to download
-        S3URI="${{ inputs.s3uri }}"
+        S3URI="$S3_URI"
         ARTIFACT_NAME="$(basename "$S3URI")"
 
         # Try to download and handle failure
         AWSCMD=${AWSCMD:-aws}
-        if [[ "${{ inputs.public-bucket }}" == "true" ]]; then
+        if [[ "$PUBLIC_BUCKET" == "true" ]]; then
           AWS_CLI_ARGS="--no-sign-request"
         else
           AWS_CLI_ARGS=""
         fi
         $AWSCMD s3 cp $AWS_CLI_ARGS "$S3URI" "$TMPFILE" || {
           echo "success=false" >> $GITHUB_OUTPUT
-          if [[ "${{ inputs.not-found }}" == "ignore" ]]; then
+          if [[ "$NOT_FOUND" == "ignore" ]]; then
             echo "::debug::Artifact not found at $S3URI"
-          elif [[ "${{ inputs.not-found }}" == "warn" ]]; then
+          elif [[ "$NOT_FOUND" == "warn" ]]; then
             echo "::warning::Artifact not found at $S3URI"
           else
             echo "::error::Artifact not found at $S3URI"
@@ -103,17 +107,17 @@ runs:
         }
 
         if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz ]]; then
-          if [[ -n "${{ inputs.strip }}" ]]; then
-            TAR_CLI_ARGS="--strip-components=${{ inputs.strip }}"
+          if [[ -n "$STRIP" ]]; then
+            TAR_CLI_ARGS="--strip-components=$STRIP"
           fi
           # Downloaded a tarball, extract it
-          tar -xzvf "$TMPFILE" -C "${{ inputs.path }}" $TAR_CLI_ARGS
+          tar -xzvf "$TMPFILE" -C "$ARTIFACT_PATH" $TAR_CLI_ARGS
         else
           # Downloaded a single file, move it to the target path
-          echo "Copying file $TMPFILE to directory ${{ inputs.path }}"
-          mv "$TMPFILE" "${{ inputs.path }}/$ARTIFACT_NAME"
+          echo "Copying file $TMPFILE to directory $ARTIFACT_PATH"
+          mv "$TMPFILE" "$ARTIFACT_PATH/$ARTIFACT_NAME"
         fi
         echo "::debug::Contents of artifact path"
-        echo "$(tree -a "${{ inputs.path }}" 2>&1)"
+        echo "$(tree -a "$ARTIFACT_PATH" 2>&1)"
         echo "success=true" >> $GITHUB_OUTPUT
         echo "s3uri=$S3URI" >> $GITHUB_OUTPUT
