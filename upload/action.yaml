@@ -44,6 +44,9 @@ runs:
     - name: Collect artifacts into temporary path
       id: collect
       shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.path }}
+        COMPRESS: ${{ inputs.compress }}
       run: |
         # Create our temporary directory parent for our artifacts
         mkdir -p "$RUNNER_TEMP/actions-s3-artifact"
@@ -61,7 +64,7 @@ runs:
         mkdir -p "$TMPARTIFACT"
 
         # Read the path string into a bash array for easy looping
-        readarray -t ARTIFACT_PATHS <<< "${{ inputs.path }}"
+        readarray -t ARTIFACT_PATHS <<< "$ARTIFACT_PATH"
 
         # Iterate through each artifact path and copy it to the temporary path
         for name in ${ARTIFACT_PATHS[@]}; do
@@ -81,7 +84,7 @@ runs:
         fi
 
         # Tarball the temporary path into a single object if "compress" is true, return the folder path otherwise
-        if [[ "${{ inputs.compress }}" == "true" ]]; then
+        if [[ "$COMPRESS" == "true" ]]; then
           echo "Creating artifact tarball"
           tar -czvf "$TMPTAR" -C "$TMPARTIFACT" --transform='s/^\.\///' \
             --show-transformed .
@@ -121,6 +124,9 @@ runs:
       env:
         S3_URI_INPUT: ${{ inputs.s3uri }}
         S3_KEY: ${{ inputs.key }}
+        COMPRESS: ${{ inputs.compress }}
+        TARBALL_PATH: ${{ steps.collect.outputs.tarball }}
+        FOLDER_PATH: ${{ steps.collect.outputs.folder }}
       run: |
         AWSCMD=${AWSCMD:-aws}
         S3URI="$S3_URI_INPUT"
@@ -130,7 +136,7 @@ runs:
         fi
 
         S3URI="${S3URI%/}/$S3_KEY"
-        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz || "${{ inputs.compress }}" != "true" ]]; then
+        if [[ "$S3URI" == *.tgz || "$S3URI" == *.tar.gz || "$COMPRESS" != "true" ]]; then
           echo "::debug::s3uri does not need .tgz extension, skipping"
         else
           S3URI="$S3URI.tgz"
@@ -139,12 +145,12 @@ runs:
         echo "::debug::Using AWS CLI: $AWSCMD"
 
         # Upload the artifact to S3 based on keyname from previous step
-        if [[ "${{ inputs.compress }}" == "true" ]]; then
-          echo "Uploading '${{ steps.collect.outputs.tarball }}' to S3 '$S3URI'"
-          $AWSCMD s3 cp "${{ steps.collect.outputs.tarball }}" "$S3URI"
+        if [[ "$COMPRESS" == "true" ]]; then
+          echo "Uploading '$TARBALL_PATH' to S3 '$S3URI'"
+          $AWSCMD s3 cp "$TARBALL_PATH" "$S3URI"
         else
-          echo "Uploading '${{ steps.collect.outputs.folder }}' to S3 '$S3URI'"
-          $AWSCMD s3 cp --recursive "${{ steps.collect.outputs.folder }}" "$S3URI"
+          echo "Uploading '$FOLDER_PATH' to S3 '$S3URI'"
+          $AWSCMD s3 cp --recursive "$FOLDER_PATH" "$S3URI"
         fi
         # Output the S3 URL for use in subsequent steps
         echo "s3uri=$S3URI" >> $GITHUB_OUTPUT
