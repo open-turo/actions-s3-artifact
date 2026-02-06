@@ -41,7 +41,7 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.4
+        uses: LocalStack/setup-localstack@v0.2.5
         with:
           image-tag: "latest"
           install-awslocal: "true"
@@ -111,7 +111,7 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.4
+        uses: LocalStack/setup-localstack@v0.2.5
         with:
           image-tag: "latest"
           install-awslocal: "true"
@@ -216,7 +216,7 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.4
+        uses: LocalStack/setup-localstack@v0.2.5
         with:
           image-tag: "latest"
           install-awslocal: "true"
