@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Add awslocal wrapper to PATH
+        run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
         uses: actions/setup-python@v6
         with:
@@ -40,12 +42,22 @@ jobs:
           cache: "pip"
       - name: Install python dependencies
         run: pip install -r requirements.txt
-      - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.5
-        with:
-          image-tag: "latest"
-          install-awslocal: "true"
-      - name: Create S3 bucket in localstack
+      - name: Start SeaweedFS
+        run: docker run -d --name seaweedfs -p 8333:8333 chrislusf/seaweedfs:4.17 server -s3 -s3.iam=false
+      - name: Wait for SeaweedFS
+        run: |
+          for i in $(seq 1 30); do
+            if curl -so /dev/null http://localhost:8333 2>/dev/null; then
+              echo "SeaweedFS is ready"
+              exit 0
+            fi
+            echo "Waiting for SeaweedFS... attempt $i"
+            sleep 2
+          done
+          docker logs seaweedfs
+          echo "::error::SeaweedFS did not become ready in time"
+          exit 1
+      - name: Create S3 bucket
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Upload individual files
         id: individual
@@ -103,6 +115,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Add awslocal wrapper to PATH
+        run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
         uses: actions/setup-python@v6
         with:
@@ -110,12 +124,22 @@ jobs:
           cache: "pip"
       - name: Install python dependencies
         run: pip install -r requirements.txt
-      - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.5
-        with:
-          image-tag: "latest"
-          install-awslocal: "true"
-      - name: Create S3 bucket in localstack
+      - name: Start SeaweedFS
+        run: docker run -d --name seaweedfs -p 8333:8333 chrislusf/seaweedfs:4.17 server -s3 -s3.iam=false
+      - name: Wait for SeaweedFS
+        run: |
+          for i in $(seq 1 30); do
+            if curl -so /dev/null http://localhost:8333 2>/dev/null; then
+              echo "SeaweedFS is ready"
+              exit 0
+            fi
+            echo "Waiting for SeaweedFS... attempt $i"
+            sleep 2
+          done
+          docker logs seaweedfs
+          echo "::error::SeaweedFS did not become ready in time"
+          exit 1
+      - name: Create S3 bucket
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Upload a file
         id: upload-individual
@@ -208,6 +232,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Add awslocal wrapper to PATH
+        run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
         uses: actions/setup-python@v6
         with:
@@ -215,13 +241,22 @@ jobs:
           cache: "pip"
       - name: Install python dependencies
         run: pip install -r requirements.txt
-      - name: Setup LocalStack
-        uses: LocalStack/setup-localstack@v0.2.5
-        with:
-          image-tag: "latest"
-          install-awslocal: "true"
-
-      - name: Create S3 bucket in localstack
+      - name: Start SeaweedFS
+        run: docker run -d --name seaweedfs -p 8333:8333 chrislusf/seaweedfs:4.17 server -s3 -s3.iam=false
+      - name: Wait for SeaweedFS
+        run: |
+          for i in $(seq 1 30); do
+            if curl -so /dev/null http://localhost:8333 2>/dev/null; then
+              echo "SeaweedFS is ready"
+              exit 0
+            fi
+            echo "Waiting for SeaweedFS... attempt $i"
+            sleep 2
+          done
+          docker logs seaweedfs
+          echo "::error::SeaweedFS did not become ready in time"
+          exit 1
+      - name: Create S3 bucket
         run: awslocal s3 mb "s3://${S3_BUCKET}"
       - name: Download cache (doesn't exist)
         id: cache
