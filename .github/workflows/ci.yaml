@@ -32,7 +32,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
@@ -114,7 +114,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
@@ -231,7 +231,7 @@ jobs:
       S3_BUCKET: actions-s3-artifact-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
