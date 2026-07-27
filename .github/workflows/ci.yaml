@@ -36,7 +36,7 @@ jobs:
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
           cache: "pip"
@@ -118,7 +118,7 @@ jobs:
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
           cache: "pip"
@@ -235,7 +235,7 @@ jobs:
       - name: Add awslocal wrapper to PATH
         run: echo "$GITHUB_WORKSPACE/script" >> "$GITHUB_PATH"
       - name: Setup Python dependency cache
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
           cache: "pip"
