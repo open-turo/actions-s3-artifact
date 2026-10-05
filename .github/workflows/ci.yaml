@@ -10,7 +10,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: open-turo/actions-gha/lint@v2
+      - uses: open-turo/actions-gha/lint@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-upload, test-download]
     steps:
-      - uses: open-turo/actions-gha/test@v2
+      - uses: open-turo/actions-gha/test@v3
         with:
           checkout-repo: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
